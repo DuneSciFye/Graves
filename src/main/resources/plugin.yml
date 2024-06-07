@@ -1,0 +1,6 @@
+name: Graves
+version: '${version}'
+main: me.dunescifye.graves.Graves
+api-version: '1.20'
+softdepend:
+  - DecentHolograms

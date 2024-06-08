@@ -1,0 +1,18 @@
+#Set what percent of your inventory is dropped.
+#Must be an integer from 0-100
+#Default is 10%-15% of inventory dropped.
+minimumItemsPercentageDropped: 10
+maximumItemsPercentageDropped: 15
+
+#Set what percent of your xp is dropped
+#Must be an integer from 0-100
+#Default is 0%-30% of your total xp is dropped
+minimumExpPercentageDropped: 0
+maximumExpPercentageDropped: 30
+
+#Set what percent of your dropped xp is kept
+#Must be an integer from 0-100
+#Default is 50%-100% of dropped xp is kept
+#If you don't want any xp to be permanently lost, set them both to 100 so all xp dropped it kept in the grave.
+minimumExpPercentageOfDroppedRetained: 50
+maximumExpPercentageOfDroppedRetained: 100

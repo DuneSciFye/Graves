@@ -11,33 +11,42 @@ public class Config {
     public static int minimumItemsPercentageDropped, maximumItemsPercentageDropped, minimumExpPercentageDropped,
         maximumExpPercentageDropped, minimumExpPercentageOfDroppedRetained, maximumExpPercentageOfDroppedRetained;
     private static Logger logger;
+    private static FileConfiguration config;
 
     public static void setup(Graves plugin) {
-        FileConfiguration config = plugin.getConfig();
+        config = plugin.getConfig();
         logger = Bukkit.getLogger();
 
-        minimumItemsPercentageDropped = getConfigValue(config, "minimumItemsPercentageDropped", 10, 0, 100);
-        maximumItemsPercentageDropped = getConfigValue(config, "maximumItemsPercentageDropped", 15, 0, 100);
-        minimumExpPercentageDropped = getConfigValue(config, "minimumExpPercentageDropped", 0, 0, 100);
-        maximumExpPercentageDropped = getConfigValue(config, "maximumExpPercentageDropped", 30, 0, 100);
-        minimumExpPercentageOfDroppedRetained = getConfigValue(config, "minimumExpPercentageOfDroppedRetained", 50, 0, 100);
-        maximumExpPercentageOfDroppedRetained = getConfigValue(config, "maximumExpPercentageOfDroppedRetained", 100, 0, 100);
+        minimumItemsPercentageDropped = getConfigValue("minimumItemsPercentageDropped", 10, 0, 100);
+        maximumItemsPercentageDropped = getConfigValue("maximumItemsPercentageDropped", 15, 0, 100);
+        minimumExpPercentageDropped = getConfigValue("minimumExpPercentageDropped", 0, 0, 100);
+        maximumExpPercentageDropped = getConfigValue("maximumExpPercentageDropped", 30, 0, 100);
+        minimumExpPercentageOfDroppedRetained = getConfigValue("minimumExpPercentageOfDroppedRetained", 50, 0, 100);
+        maximumExpPercentageOfDroppedRetained = getConfigValue("maximumExpPercentageOfDroppedRetained", 100, 0, 100);
 
         plugin.saveDefaultConfig();
     }
 
-    private static int getConfigValue(FileConfiguration config, String path, int defaultValue, int minValue, int maxValue) {
+    private static int getConfigValue(String path, int defaultValue, int minValue, int maxValue) {
         if (!config.isSet(path)) {
             config.set(path, defaultValue);
             return defaultValue;
-        } else {
-            int value = config.getInt(path);
-            if (value < minValue || value > maxValue) {
-                logger.warning(path + " is out of range. Must be a number between " + minValue + " and " + maxValue + ". Found " + value + ". Using default value of " + defaultValue + ".");
-                return defaultValue;
-            } else {
-                return value;
-            }
         }
+
+        String valueStr = config.getString(path);
+
+        if (!valueStr.matches("-?\\d+(\\.\\d+)?")) {
+            logger.warning("[Graves] " + path + " is not a valid number. Must be a number between " + minValue + " and " + maxValue + ". Found " + valueStr + ". Using default value of " + defaultValue + ".");
+            return defaultValue;
+        }
+
+        int value = Integer.parseInt(valueStr);
+
+        if (value < minValue || value > maxValue) {
+            logger.warning("[Graves] " + path + " is out of range. Must be a number between " + minValue + " and " + maxValue + ". Found " + value + ". Using default value of " + defaultValue + ".");
+            return defaultValue;
+        }
+
+        return value;
     }
 }

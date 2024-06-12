@@ -98,7 +98,7 @@ public class PlayerDeathListener implements Listener {
         container.set(keyItems, DataType.ITEM_STACK_ARRAY, dropsArray);
         container.set(keyStoredExp, PersistentDataType.INTEGER, storedXP);
         container.set(keyGraveOwner, PersistentDataType.STRING, p.getName());
-        container.set(keyGraveUUID, PersistentDataType.STRING, graveID);
+        container.set(keyGraveID, PersistentDataType.STRING, graveID);
         //Creating hologram
         if (decentHologramsEnabled) {
             DHAPI.createHologram(graveID, location, Arrays.asList(

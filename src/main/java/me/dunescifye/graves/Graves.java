@@ -14,7 +14,7 @@ public final class Graves extends JavaPlugin {
     public static final NamespacedKey keyItems = new NamespacedKey("graves", "items");
     public static final NamespacedKey keyStoredExp = new NamespacedKey("graves", "storedexp");
     public static final NamespacedKey keyGraveOwner = new NamespacedKey("graves", "graveowner");
-    public static final NamespacedKey keyGraveUUID = new NamespacedKey("graves", "uuid");
+    public static final NamespacedKey keyGraveID = new NamespacedKey("graves", "uuid");
     public static boolean decentHologramsEnabled = false;
 
     private static Graves plugin;

@@ -60,7 +60,7 @@ public class Config {
 
         String valueStr = config.getString(path);
 
-        if (!valueStr.matches("(true|false)")) {
+        if (valueStr != null && !valueStr.matches("(true|false)")) {
             logger.warning("[Graves] " + path + " is not a valid boolean. Must be either true or false. Using default value of " + defaultValue + ".");
             return defaultValue;
         }

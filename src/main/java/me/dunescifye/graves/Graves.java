@@ -8,6 +8,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import static me.dunescifye.graves.files.Config.decentHologramsHook;
+
 
 public final class Graves extends JavaPlugin {
 
@@ -32,7 +34,7 @@ public final class Graves extends JavaPlugin {
         Bukkit.getLogger().info("[Graves] Graves enabled");
         Config.setup(plugin);
 
-        if (Bukkit.getPluginManager().isPluginEnabled("DecentHolograms")) {
+        if (Bukkit.getPluginManager().isPluginEnabled("DecentHolograms") && decentHologramsHook) {
             Bukkit.getLogger().info("[Graves] Detected DecentHolograms plugin, enabling holograms.");
             decentHologramsEnabled = true;
         }

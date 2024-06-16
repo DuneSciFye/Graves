@@ -10,6 +10,7 @@ public class Config {
 
     public static int minimumItemsPercentageDropped, maximumItemsPercentageDropped, minimumExpPercentageDropped,
         maximumExpPercentageDropped, minimumExpPercentageOfDroppedRetained, maximumExpPercentageOfDroppedRetained;
+    public static boolean decentHologramsHook;
     private static Logger logger;
     private static FileConfiguration config;
 
@@ -23,6 +24,8 @@ public class Config {
         maximumExpPercentageDropped = getConfigValue("maximumExpPercentageDropped", 30, 0, 100);
         minimumExpPercentageOfDroppedRetained = getConfigValue("minimumExpPercentageOfDroppedRetained", 50, 0, 100);
         maximumExpPercentageOfDroppedRetained = getConfigValue("maximumExpPercentageOfDroppedRetained", 100, 0, 100);
+        decentHologramsHook = getConfigValue("Hooks.DecentHolograms", true);
+
 
         plugin.saveDefaultConfig();
     }
@@ -48,5 +51,20 @@ public class Config {
         }
 
         return value;
+    }
+    private static Boolean getConfigValue(String path, Boolean defaultValue) {
+        if (!config.isSet(path)) {
+            config.set(path, defaultValue);
+            return defaultValue;
+        }
+
+        String valueStr = config.getString(path);
+
+        if (!valueStr.matches("(true|false)")) {
+            logger.warning("[Graves] " + path + " is not a valid boolean. Must be either true or false. Using default value of " + defaultValue + ".");
+            return defaultValue;
+        }
+
+        return config.getBoolean(path);
     }
 }

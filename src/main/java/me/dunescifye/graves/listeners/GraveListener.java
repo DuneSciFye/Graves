@@ -24,9 +24,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.time.Duration;
 import java.util.*;
 
 import static me.dunescifye.graves.Graves.*;
+import static me.dunescifye.graves.utils.CooldownManager.*;
 
 public class GraveListener implements Listener {
 
@@ -46,7 +48,52 @@ public class GraveListener implements Listener {
         if (entity instanceof ArmorStand armorStand) {
             if (armorStand.getPersistentDataContainer().has(keyItems, DataType.ITEM_STACK_ARRAY)) {
                 e.setCancelled(true);
-                graveInteract(p, armorStand);
+                if (hasCooldown(clickCooldowns, p.getUniqueId())) return;
+                setCooldown(clickCooldowns, p.getUniqueId(), Duration.ofSeconds(1));
+                PersistentDataContainer container = armorStand.getPersistentDataContainer();
+                ItemStack[] graveItems = container.get(keyItems, DataType.ITEM_STACK_ARRAY);
+                String graveID = container.get(keyGraveID, PersistentDataType.STRING);
+
+                if (p.isSneaking() && graveItems != null){ //Crouch click to quickly obtain items
+                    armorStand.remove(); //Delete armorstand grave
+                    container.remove(keyItems);
+                    //If grave has been opened, close inv for viewers
+                    if (linkedInventories.containsKey(graveID)) {
+                        List<HumanEntity> viewers = new ArrayList<>(linkedInventories.get(graveID).getViewers());
+                        for (HumanEntity viewer : viewers) {
+                            openedInventories.remove((Player) viewer);
+                            viewer.closeInventory();
+                        }
+                        linkedInventories.remove(graveID);
+                    }
+
+                    for (ItemStack item : graveItems) {
+                        Item drop = p.getWorld().dropItem(p.getLocation(), item);
+                        drop.setPickupDelay(0);
+                    }
+                    if (container.has(keyStoredExp, PersistentDataType.INTEGER)) {
+                        Integer storedExp = container.get(keyStoredExp, PersistentDataType.INTEGER);
+                        if (storedExp != null) {
+                            p.giveExp(storedExp);
+                        }
+                    }
+                    if (decentHologramsEnabled && graveID != null) DHAPI.removeHologram(graveID); //Remove hologram
+                    linkedInventories.remove(graveID);
+                } else {
+                    Inventory inv;
+                    if (!linkedInventories.containsKey(graveID)) {
+                        inv = Bukkit.createInventory(null, 27, Component.text(container.has(keyGraveOwner, PersistentDataType.STRING) ? container.get(keyGraveOwner, PersistentDataType.STRING) + "'s Grave" : "Unknown Grave"));
+
+                        assert graveItems != null;
+                        for (ItemStack item : graveItems) inv.addItem(item); //Put grave items in our custom inv
+                        linkedInventories.put(graveID, inv);
+                    } else {
+                        inv = linkedInventories.get(graveID);
+                    }
+                    openedInventories.put(p, inv); //Assign this inv to this player
+                    clickArmorstands.put(p.getUniqueId(), armorStand); //Assign armor stand to player as clicked grave
+                    p.openInventory(inv);
+                }
             }
         }
     }
@@ -59,7 +106,52 @@ public class GraveListener implements Listener {
             if (entity instanceof ArmorStand armorStand) {
                 if (armorStand.getPersistentDataContainer().has(keyItems)) {
                     e.setCancelled(true);
-                    graveInteract(p, armorStand);
+                    if (hasCooldown(clickCooldowns, p.getUniqueId())) return;
+                    setCooldown(clickCooldowns, p.getUniqueId(), Duration.ofSeconds(1));
+                    PersistentDataContainer container = armorStand.getPersistentDataContainer();
+                    ItemStack[] graveItems = container.get(keyItems, DataType.ITEM_STACK_ARRAY);
+                    String graveID = container.get(keyGraveID, PersistentDataType.STRING);
+
+                    if (p.isSneaking() && graveItems != null){ //Crouch click to quickly obtain items
+                        armorStand.remove(); //Delete armorstand grave
+                        container.remove(keyItems);
+                        //If grave has been opened, close inv for viewers
+                        if (linkedInventories.containsKey(graveID)) {
+                            List<HumanEntity> viewers = new ArrayList<>(linkedInventories.get(graveID).getViewers());
+                            for (HumanEntity viewer : viewers) {
+                                openedInventories.remove((Player) viewer);
+                                viewer.closeInventory();
+                            }
+                            linkedInventories.remove(graveID);
+                        }
+
+                        for (ItemStack item : graveItems) {
+                            Item drop = p.getWorld().dropItem(p.getLocation(), item);
+                            drop.setPickupDelay(0);
+                        }
+                        if (container.has(keyStoredExp, PersistentDataType.INTEGER)) {
+                            Integer storedExp = container.get(keyStoredExp, PersistentDataType.INTEGER);
+                            if (storedExp != null) {
+                                p.giveExp(storedExp);
+                            }
+                        }
+                        if (decentHologramsEnabled && graveID != null) DHAPI.removeHologram(graveID); //Remove hologram
+                        linkedInventories.remove(graveID);
+                    } else {
+                        Inventory inv;
+                        if (!linkedInventories.containsKey(graveID)) {
+                            inv = Bukkit.createInventory(null, 27, Component.text(container.has(keyGraveOwner, PersistentDataType.STRING) ? container.get(keyGraveOwner, PersistentDataType.STRING) + "'s Grave" : "Unknown Grave"));
+
+                            assert graveItems != null;
+                            for (ItemStack item : graveItems) inv.addItem(item); //Put grave items in our custom inv
+                            linkedInventories.put(graveID, inv);
+                        } else {
+                            inv = linkedInventories.get(graveID);
+                        }
+                        openedInventories.put(p, inv); //Assign this inv to this player
+                        clickArmorstands.put(p.getUniqueId(), armorStand); //Assign armor stand to player as clicked grave
+                        p.openInventory(inv);
+                    }
                 }
             }
         }
@@ -69,15 +161,69 @@ public class GraveListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
         Block block = e.getClickedBlock();
-        if (block != null) {
-            if (e.getHand() != EquipmentSlot.HAND) return;
-            PersistentDataContainer container = new CustomBlockData(block, getPlugin());
-            if (container.has(keyItems, DataType.ITEM_STACK_ARRAY)) {
-                e.setCancelled(true);
-                graveInteract(p, block);
+        if (block == null || e.getHand() != EquipmentSlot.HAND) return;
+        PersistentDataContainer container = new CustomBlockData(block, getPlugin());
+        if (!container.has(keyItems, DataType.ITEM_STACK_ARRAY)) return;
+
+        //We now know it is a grave
+        e.setCancelled(true);
+        if (hasCooldown(clickCooldowns, p.getUniqueId())) return;
+        //Prevent spam clicking for item dupe
+        setCooldown(clickCooldowns, p.getUniqueId(), Duration.ofSeconds(1));
+        ItemStack[] graveItems = container.get(keyItems, DataType.ITEM_STACK_ARRAY);
+        String graveID = container.get(keyGraveID, PersistentDataType.STRING);
+
+        //Sneak to insta grab all items
+        if (p.isSneaking()) {
+            block.setType(Material.AIR);
+            container.remove(keyItems);
+
+            //If grave has been opened, close inv for viewers
+            if (linkedInventories.containsKey(graveID)) {
+                List<HumanEntity> viewers = new ArrayList<>(linkedInventories.get(graveID).getViewers());
+                for (HumanEntity viewer : viewers) {
+                    openedInventories.remove((Player) viewer);
+                    viewer.closeInventory();
+                }
+                linkedInventories.remove(graveID);
             }
+
+            //Give player grave items
+            if (graveItems != null) {
+                for (ItemStack item : graveItems) {
+                    Item drop = p.getWorld().dropItem(p.getLocation(), item);
+                    drop.setPickupDelay(0);
+                }
+            }
+
+            //Give player any xp
+            if (container.has(keyStoredExp, PersistentDataType.INTEGER)) {
+                Integer storedExp = container.get(keyStoredExp, PersistentDataType.INTEGER);
+                if (storedExp != null) p.giveExp(storedExp);
+            }
+
+            //Remove hologram
+            if (decentHologramsEnabled && graveID != null) DHAPI.removeHologram(graveID);
+        } else {
+            Inventory inv;
+            if (!linkedInventories.containsKey(graveID)) {
+                inv = Bukkit.createInventory(null, 27, Component.text(container.has(keyGraveOwner, PersistentDataType.STRING) ? container.get(keyGraveOwner, PersistentDataType.STRING) + "'s Grave" : "Unknown Grave"));
+
+                clickedBlocks.put(p.getUniqueId(), block);
+
+                assert graveItems != null;
+                for (ItemStack item : graveItems) inv.addItem(item);
+                linkedInventories.put(graveID, inv);
+            } else {
+                inv = linkedInventories.get(graveID);
+            }
+            openedInventories.put(p, inv); //Assign this inv to this player
+            clickedBlocks.put(p.getUniqueId(), block); //Assign block to player as clicked grave
+
+            p.openInventory(inv);
         }
     }
+
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
@@ -126,8 +272,7 @@ public class GraveListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent e) {
         Player p = (Player) e.getPlayer();
         Inventory inv = e.getInventory();
-        if (!inv.equals(openedInventories.get(p))) return;
-
+        if (openedInventories.get(p) == null || !inv.equals(openedInventories.get(p))) return;
         UUID uuid = p.getUniqueId();
         ArrayList<ItemStack> containerContents = new ArrayList<>();
         for (ItemStack item : e.getInventory().getContents()) {
@@ -171,90 +316,14 @@ public class GraveListener implements Listener {
                     clickArmorstands.remove(uuid);
                 }
 
-                List<HumanEntity> viewers = inv.getViewers();
-                linkedInventories.remove(graveID);
+                List<HumanEntity> viewers = new ArrayList<>(linkedInventories.get(graveID).getViewers());
                 for (HumanEntity viewer : viewers) {
                     viewer.closeInventory();
                 }
+                linkedInventories.remove(graveID);
 
             }
         });
-    }
-
-
-
-    private void graveInteract(Player p, ArmorStand armorStand) {
-        PersistentDataContainer container = armorStand.getPersistentDataContainer();
-        ItemStack[] graveItems = container.get(keyItems, DataType.ITEM_STACK_ARRAY);
-        String graveID = container.get(keyGraveID, PersistentDataType.STRING);
-
-        if (p.isSneaking() && graveItems != null){ //Crouch click to quickly obtain items
-            for (ItemStack item : graveItems) {
-                Item drop = p.getWorld().dropItem(p.getLocation(), item);
-                drop.setPickupDelay(0);
-            }
-            if (container.has(keyStoredExp, PersistentDataType.INTEGER)) {
-                Integer storedExp = container.get(keyStoredExp, PersistentDataType.INTEGER);
-                if (storedExp != null) {
-                    p.giveExp(storedExp);
-                }
-            }
-            if (decentHologramsEnabled && graveID != null) DHAPI.removeHologram(graveID); //Remove hologram
-            armorStand.remove(); //Delete armorstand grave
-            linkedInventories.remove(graveID);
-        } else {
-            Inventory inv;
-            if (!linkedInventories.containsKey(graveID)) {
-                inv = Bukkit.createInventory(null, 27, Component.text(container.has(keyGraveOwner, PersistentDataType.STRING) ? container.get(keyGraveOwner, PersistentDataType.STRING) + "'s Grave" : "Unknown Grave"));
-
-                assert graveItems != null;
-                for (ItemStack item : graveItems) inv.addItem(item); //Put grave items in our custom inv
-                linkedInventories.put(graveID, inv);
-            } else {
-                inv = linkedInventories.get(graveID);
-            }
-            openedInventories.put(p, inv); //Assign this inv to this player
-            clickArmorstands.put(p.getUniqueId(), armorStand); //Assign armor stand to player as clicked grave
-            p.openInventory(inv);
-        }
-    }
-    private void graveInteract(Player p, Block block) {
-        PersistentDataContainer container = new CustomBlockData(block, getPlugin());
-        ItemStack[] graveItems = container.get(keyItems, DataType.ITEM_STACK_ARRAY);
-        String graveID = container.get(keyGraveID, PersistentDataType.STRING);
-
-        if (p.isSneaking() && graveItems != null) {
-            for (ItemStack item : graveItems) {
-                Item drop = p.getWorld().dropItem(p.getLocation(), item);
-                drop.setPickupDelay(0);
-            }
-            if (container.has(keyStoredExp, PersistentDataType.INTEGER)) {
-                Integer storedExp = container.get(keyStoredExp, PersistentDataType.INTEGER);
-                if (storedExp != null) {
-                    p.giveExp(storedExp);
-                }
-            }
-            block.setType(Material.AIR);
-            if (decentHologramsEnabled && graveID != null) DHAPI.removeHologram(graveID);
-            linkedInventories.remove(graveID);
-        } else {
-            Inventory inv;
-            if (!linkedInventories.containsKey(graveID)) {
-                inv = Bukkit.createInventory(null, 27, Component.text(container.has(keyGraveOwner, PersistentDataType.STRING) ? container.get(keyGraveOwner, PersistentDataType.STRING) + "'s Grave" : "Unknown Grave"));
-
-                clickedBlocks.put(p.getUniqueId(), block);
-
-                assert graveItems != null;
-                for (ItemStack item : graveItems) inv.addItem(item);
-                linkedInventories.put(graveID, inv);
-            } else {
-                inv = linkedInventories.get(graveID);
-            }
-            openedInventories.put(p, inv); //Assign this inv to this player
-            clickedBlocks.put(p.getUniqueId(), block); //Assign block to player as clicked grave
-
-            p.openInventory(inv);
-        }
     }
 
 }

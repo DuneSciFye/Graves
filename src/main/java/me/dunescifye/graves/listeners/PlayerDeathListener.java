@@ -2,7 +2,6 @@ package me.dunescifye.graves.listeners;
 
 import com.jeff_media.customblockdata.CustomBlockData;
 import com.jeff_media.morepersistentdatatypes.DataType;
-import com.jeff_media.morepersistentdatatypes.datatypes.GenericDataType;
 import com.loohp.interactivechat.libs.net.kyori.adventure.text.Component;
 import eu.decentsoftware.holograms.api.DHAPI;
 import me.dunescifye.graves.Graves;
@@ -18,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;

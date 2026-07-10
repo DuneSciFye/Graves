@@ -322,6 +322,10 @@ public class GraveListener implements Listener {
                 }
                 linkedInventories.remove(graveID);
 
+            } else {
+                // Grave still has items — just clean up the player's map entries
+                clickedBlocks.remove(uuid);
+                clickArmorstands.remove(uuid);
             }
         });
     }

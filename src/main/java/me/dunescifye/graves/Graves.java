@@ -2,6 +2,7 @@ package me.dunescifye.graves;
 
 import com.jeff_media.customblockdata.CustomBlockData;
 import me.dunescifye.graves.files.Config;
+import me.dunescifye.graves.listeners.GraveBreakListener;
 import me.dunescifye.graves.listeners.PlayerDeathListener;
 import me.dunescifye.graves.listeners.GraveListener;
 import org.bukkit.Bukkit;
@@ -18,6 +19,7 @@ public final class Graves extends JavaPlugin {
     public static final NamespacedKey keyGraveOwner = new NamespacedKey("graves", "graveowner");
     public static final NamespacedKey keyGraveID = new NamespacedKey("graves", "uuid");
     public static boolean decentHologramsEnabled = false;
+    public static boolean interactiveChatEnabled = false;
 
     private static Graves plugin;
 
@@ -30,6 +32,7 @@ public final class Graves extends JavaPlugin {
         plugin = this;
         new PlayerDeathListener().playerDeathHandler(this);
         new GraveListener().PlayerInteractAtEntityHandler(this);
+        new GraveBreakListener().graveBreakHandler(this);
         CustomBlockData.registerListener(this);
         Bukkit.getLogger().info("[Graves] Graves enabled");
         Config.setup(plugin);
@@ -39,10 +42,10 @@ public final class Graves extends JavaPlugin {
             decentHologramsEnabled = true;
         }
 
-    }
+        if (Bukkit.getPluginManager().isPluginEnabled("InteractiveChat")) {
+            Bukkit.getLogger().info("[Graves] Detected InteractiveChat plugin, enabling interactive item display.");
+            interactiveChatEnabled = true;
+        }
 
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
     }
 }

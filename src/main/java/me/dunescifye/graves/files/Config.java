@@ -26,8 +26,31 @@ public class Config {
         maximumExpPercentageOfDroppedRetained = getConfigValue("maximumExpPercentageOfDroppedRetained", 100, 0, 100);
         decentHologramsHook = getConfigValue("Hooks.DecentHolograms", true);
 
+        int[] itemsRange = validateRange("minimumItemsPercentageDropped", "maximumItemsPercentageDropped",
+            minimumItemsPercentageDropped, maximumItemsPercentageDropped, 10, 15);
+        minimumItemsPercentageDropped = itemsRange[0];
+        maximumItemsPercentageDropped = itemsRange[1];
+
+        int[] expRange = validateRange("minimumExpPercentageDropped", "maximumExpPercentageDropped",
+            minimumExpPercentageDropped, maximumExpPercentageDropped, 0, 30);
+        minimumExpPercentageDropped = expRange[0];
+        maximumExpPercentageDropped = expRange[1];
+
+        int[] retainedRange = validateRange("minimumExpPercentageOfDroppedRetained", "maximumExpPercentageOfDroppedRetained",
+            minimumExpPercentageOfDroppedRetained, maximumExpPercentageOfDroppedRetained, 50, 100);
+        minimumExpPercentageOfDroppedRetained = retainedRange[0];
+        maximumExpPercentageOfDroppedRetained = retainedRange[1];
 
         plugin.saveDefaultConfig();
+    }
+
+    // minVal == maxVal is a valid fixed value (e.g. config.yml documents setting both retained% to 100), only minVal > maxVal is invalid
+    private static int[] validateRange(String minKey, String maxKey, int minVal, int maxVal, int defaultMin, int defaultMax) {
+        if (minVal > maxVal) {
+            logger.warning("[Graves] " + minKey + " (" + minVal + ") must not be greater than " + maxKey + " (" + maxVal + "). Resetting both to defaults.");
+            return new int[]{defaultMin, defaultMax};
+        }
+        return new int[]{minVal, maxVal};
     }
 
     private static int getConfigValue(String path, int defaultValue, int minValue, int maxValue) {

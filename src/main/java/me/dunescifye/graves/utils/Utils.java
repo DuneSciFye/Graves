@@ -2,10 +2,20 @@ package me.dunescifye.graves.utils;
 
 import org.bukkit.entity.Player;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class Utils {
 
-    //From Essential's Code
+    // ThreadLocalRandom.nextInt requires bound > origin, but config percentages may be set equal (a fixed value)
+    public static int randomPercentage(int min, int max) {
+        return min == max ? min : ThreadLocalRandom.current().nextInt(min, max + 1);
+    }
 
+    public static String deathLocationText(int x, int y, int z) {
+        return "You died at " + x + ", " + y + ", " + z;
+    }
+
+    // From Essential's Code
     public static int getExpToLevelUp(int level){
         if (level <= 15) {
             return 2*level+7;
